@@ -53,16 +53,16 @@ class EndpointsResource:
             body=body,
         )
 
-    def get(self, workspace_id: str, id: str) -> Endpoint:
+    def get(self, workspace_id: str, endpoint_id: str) -> Endpoint:
         return self._http.request(
             "GET",
-            f"/management/v1/workspaces/{quote(workspace_id, safe='')}/endpoints/{quote(id, safe='')}",
+            f"/management/v1/workspaces/{quote(workspace_id, safe='')}/endpoints/{quote(endpoint_id, safe='')}",
         )
 
     def update(
         self,
         workspace_id: str,
-        id: str,
+        endpoint_id: str,
         *,
         url: Optional[str] = None,
         description: Optional[str] = None,
@@ -80,12 +80,12 @@ class EndpointsResource:
             body["isActive"] = is_active
         return self._http.request(
             "PATCH",
-            f"/management/v1/workspaces/{quote(workspace_id, safe='')}/endpoints/{quote(id, safe='')}",
+            f"/management/v1/workspaces/{quote(workspace_id, safe='')}/endpoints/{quote(endpoint_id, safe='')}",
             body=body,
         )
 
-    def delete(self, workspace_id: str, id: str) -> None:
+    def delete(self, workspace_id: str, endpoint_id: str) -> None:
         self._http.request(
             "DELETE",
-            f"/management/v1/workspaces/{quote(workspace_id, safe='')}/endpoints/{quote(id, safe='')}",
+            f"/management/v1/workspaces/{quote(workspace_id, safe='')}/endpoints/{quote(endpoint_id, safe='')}",
         )

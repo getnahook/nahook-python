@@ -14,6 +14,10 @@ dependencies = ["httpx>=0.24.0"]
 [project.optional-dependencies]
 dev = ["pytest>=7.0", "pytest-httpx>=0.30.0"]
 
+[tool.pytest.ini_options]
+python_files = ["test_*.py", "*.test.py"]
+addopts = "--import-mode=importlib"
+
 [project.urls]
 Homepage = "https://nahook.com"
 Documentation = "https://docs.nahook.com"

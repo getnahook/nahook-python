@@ -38,16 +38,16 @@ class EventTypesResource:
             body=body,
         )
 
-    def get(self, workspace_id: str, id: str) -> EventType:
+    def get(self, workspace_id: str, event_type_id: str) -> EventType:
         return self._http.request(
             "GET",
-            f"/management/v1/workspaces/{quote(workspace_id, safe='')}/event-types/{quote(id, safe='')}",
+            f"/management/v1/workspaces/{quote(workspace_id, safe='')}/event-types/{quote(event_type_id, safe='')}",
         )
 
     def update(
         self,
         workspace_id: str,
-        id: str,
+        event_type_id: str,
         *,
         description: Optional[str] = None,
     ) -> EventType:
@@ -56,12 +56,12 @@ class EventTypesResource:
             body["description"] = description
         return self._http.request(
             "PATCH",
-            f"/management/v1/workspaces/{quote(workspace_id, safe='')}/event-types/{quote(id, safe='')}",
+            f"/management/v1/workspaces/{quote(workspace_id, safe='')}/event-types/{quote(event_type_id, safe='')}",
             body=body,
         )
 
-    def delete(self, workspace_id: str, id: str) -> None:
+    def delete(self, workspace_id: str, event_type_id: str) -> None:
         self._http.request(
             "DELETE",
-            f"/management/v1/workspaces/{quote(workspace_id, safe='')}/event-types/{quote(id, safe='')}",
+            f"/management/v1/workspaces/{quote(workspace_id, safe='')}/event-types/{quote(event_type_id, safe='')}",
         )

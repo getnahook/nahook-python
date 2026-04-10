@@ -37,6 +37,16 @@ class NahookClient:
             retries=retries,
         )
 
+    def close(self) -> None:
+        """Close the underlying HTTP connection pool."""
+        self._http.close()
+
+    def __enter__(self) -> "NahookClient":
+        return self
+
+    def __exit__(self, *args: object) -> None:
+        self.close()
+
     def send(
         self,
         endpoint_id: str,

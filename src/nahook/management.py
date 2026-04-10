@@ -30,13 +30,23 @@ class NahookManagement:
     ) -> None:
         if not token.startswith("nhm_"):
             raise ValueError("Invalid management token: must start with 'nhm_'")
-        http = HttpClient(
+        self._http = HttpClient(
             token=token,
             base_url=base_url,
             timeout=timeout,
         )
-        self.endpoints = EndpointsResource(http)
-        self.event_types = EventTypesResource(http)
-        self.applications = ApplicationsResource(http)
-        self.subscriptions = SubscriptionsResource(http)
-        self.portal_sessions = PortalSessionsResource(http)
+        self.endpoints = EndpointsResource(self._http)
+        self.event_types = EventTypesResource(self._http)
+        self.applications = ApplicationsResource(self._http)
+        self.subscriptions = SubscriptionsResource(self._http)
+        self.portal_sessions = PortalSessionsResource(self._http)
+
+    def close(self) -> None:
+        """Close the underlying HTTP connection pool."""
+        self._http.close()
+
+    def __enter__(self) -> "NahookManagement":
+        return self
+
+    def __exit__(self, *args: object) -> None:
+        self.close()

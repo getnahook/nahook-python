@@ -52,6 +52,16 @@ class HttpClient:
         self._retries = retries
         self._client = httpx.Client(timeout=self._timeout / 1000)
 
+    def close(self) -> None:
+        """Close the underlying HTTP connection pool."""
+        self._client.close()
+
+    def __enter__(self) -> "HttpClient":
+        return self
+
+    def __exit__(self, *args: Any) -> None:
+        self.close()
+
     def request(
         self,
         method: Literal["GET", "POST", "PATCH", "DELETE"],

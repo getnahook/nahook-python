@@ -48,16 +48,16 @@ class ApplicationsResource:
             body=body,
         )
 
-    def get(self, workspace_id: str, id: str) -> Application:
+    def get(self, workspace_id: str, app_id: str) -> Application:
         return self._http.request(
             "GET",
-            f"/management/v1/workspaces/{quote(workspace_id, safe='')}/applications/{quote(id, safe='')}",
+            f"/management/v1/workspaces/{quote(workspace_id, safe='')}/applications/{quote(app_id, safe='')}",
         )
 
     def update(
         self,
         workspace_id: str,
-        id: str,
+        app_id: str,
         *,
         name: Optional[str] = None,
         metadata: Optional[Dict[str, str]] = None,
@@ -69,14 +69,14 @@ class ApplicationsResource:
             body["metadata"] = metadata
         return self._http.request(
             "PATCH",
-            f"/management/v1/workspaces/{quote(workspace_id, safe='')}/applications/{quote(id, safe='')}",
+            f"/management/v1/workspaces/{quote(workspace_id, safe='')}/applications/{quote(app_id, safe='')}",
             body=body,
         )
 
-    def delete(self, workspace_id: str, id: str) -> None:
+    def delete(self, workspace_id: str, app_id: str) -> None:
         self._http.request(
             "DELETE",
-            f"/management/v1/workspaces/{quote(workspace_id, safe='')}/applications/{quote(id, safe='')}",
+            f"/management/v1/workspaces/{quote(workspace_id, safe='')}/applications/{quote(app_id, safe='')}",
         )
 
     def list_endpoints(
