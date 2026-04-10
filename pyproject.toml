@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nahook"
+version = "0.1.0"
+description = "Official Python SDK for the Nahook webhook platform"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+dependencies = ["httpx>=0.24.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "pytest-httpx>=0.30.0"]
+
+[project.urls]
+Homepage = "https://nahook.com"
+Documentation = "https://docs.nahook.com"
+Repository = "https://github.com/nahook/nahook-python"
