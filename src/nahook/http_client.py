@@ -20,6 +20,22 @@ USER_AGENT = f"nahook-python/{SDK_VERSION}"
 BASE_DELAY_MS = 500
 MAX_DELAY_MS = 10_000
 
+# Region slug (from API key) → base URL
+_REGION_BASE_URLS: Dict[str, str] = {
+    "us": "https://us.api.nahook.com",
+    "eu": "https://eu.api.nahook.com",
+    "ap": "https://ap.api.nahook.com",
+}
+
+
+def _resolve_base_url(token: str) -> str:
+    """Extract region slug from an nhk_ API key and resolve its base URL."""
+    import re
+    m = re.match(r"^nhk_([a-z]{2})_", token)
+    if m:
+        return _REGION_BASE_URLS.get(m.group(1), DEFAULT_BASE_URL)
+    return DEFAULT_BASE_URL
+
 
 def _calculate_delay(attempt: int, retry_after_ms: Optional[float] = None) -> float:
     """Exponential backoff with full jitter."""
@@ -47,7 +63,7 @@ class HttpClient:
         retries: int = 0,
     ) -> None:
         self._token = token
-        self._base_url = (base_url or DEFAULT_BASE_URL).rstrip("/")
+        self._base_url = (base_url or _resolve_base_url(token)).rstrip("/")
         self._timeout = timeout if timeout is not None else DEFAULT_TIMEOUT_MS
         self._retries = retries
         self._client = httpx.Client(timeout=self._timeout / 1000)
