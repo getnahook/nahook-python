@@ -12,6 +12,7 @@ from .types import (
     ListResult,
     PortalSession,
     SendResult,
+    SubscribeResult,
     Subscription,
     TriggerResult,
 )
@@ -30,6 +31,7 @@ __all__ = [
     "Endpoint",
     "EventType",
     "Application",
+    "SubscribeResult",
     "Subscription",
     "PortalSession",
     "ListResult",

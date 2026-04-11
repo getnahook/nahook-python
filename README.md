@@ -176,7 +176,7 @@ ep = mgmt.applications.create_endpoint("ws_abc", "app_123",
 ```python
 result = mgmt.subscriptions.list("ws_abc", "ep_123")
 
-mgmt.subscriptions.create("ws_abc", "ep_123", event_type_id="evt_456")
+mgmt.subscriptions.create("ws_abc", "ep_123", event_type_ids=["evt_456"])
 
 mgmt.subscriptions.delete("ws_abc", "ep_123", "evt_456")
 ```

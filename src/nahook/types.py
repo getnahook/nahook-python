@@ -73,9 +73,13 @@ class Application(TypedDict):
 
 class Subscription(TypedDict):
     id: str
-    endpointId: str
     eventTypeId: str
+    eventTypeName: str
     createdAt: str
+
+
+class SubscribeResult(TypedDict):
+    subscribed: int
 
 
 class PortalSession(TypedDict):

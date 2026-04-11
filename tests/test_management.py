@@ -288,14 +288,15 @@ class TestSubscriptions:
         assert str(req.url) == "https://api.test.com/management/v1/workspaces/ws_abc/endpoints/ep_1/subscriptions"
         assert len(result["data"]) == 1
 
-    def test_create_sends_post_with_event_type_id(self, _patch_client):
-        transport = _patch_client({"id": "sub_new"}, 201)
+    def test_create_sends_post_with_event_type_ids(self, _patch_client):
+        transport = _patch_client({"subscribed": 1}, 200)
         mgmt = NahookManagement(TOKEN, base_url=BASE_URL)
-        mgmt.subscriptions.create("ws_abc", "ep_1", event_type_id="evt_1")
+        result = mgmt.subscriptions.create("ws_abc", "ep_1", event_type_ids=["evt_1"])
         req = _last_request(transport)
         assert req.method == "POST"
         body = json.loads(req.content)
-        assert body["eventTypeId"] == "evt_1"
+        assert body["eventTypeIds"] == ["evt_1"]
+        assert result["subscribed"] == 1
 
     def test_delete_sends_delete_with_event_type_id_in_path(self, _patch_client):
         transport = _patch_client(None, 204)
