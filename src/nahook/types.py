@@ -88,5 +88,33 @@ class PortalSession(TypedDict):
     expiresAt: str
 
 
+class Environment(TypedDict, total=False):
+    id: str  # required
+    name: str  # required
+    slug: str  # required
+    isDefault: bool
+    createdAt: str
+    updatedAt: str
+
+
+class CreateEnvironmentOptions(TypedDict):
+    name: str
+    slug: str
+
+
+class UpdateEnvironmentOptions(TypedDict, total=False):
+    name: str
+
+
+class EventTypeVisibility(TypedDict):
+    eventTypeId: str
+    eventTypeName: str
+    published: bool
+
+
+class SetVisibilityOptions(TypedDict):
+    published: bool
+
+
 class ListResult(TypedDict):
     data: List[Any]

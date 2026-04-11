@@ -262,6 +262,146 @@ class TestSubscriptions:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Environments CRUD
+# ---------------------------------------------------------------------------
+
+
+class TestEnvironments:
+    def test_crud_lifecycle(self, mgmt: NahookManagement):
+        """Create, list, get, update, delete an environment."""
+        ts = _ts()
+
+        # Create
+        created = mgmt.environments.create(
+            WORKSPACE_ID,
+            name=f"Test Env {ts}",
+            slug=f"test-env-{ts}",
+        )
+        env_id = created["id"]
+        assert created["name"] == f"Test Env {ts}"
+        assert created["slug"] == f"test-env-{ts}"
+        assert created["isDefault"] is False
+
+        # List — should contain at least 2 (default + ours)
+        listed = mgmt.environments.list(WORKSPACE_ID)
+        assert len(listed["data"]) >= 2
+
+        # Get by id
+        fetched = mgmt.environments.get(WORKSPACE_ID, env_id)
+        assert fetched["id"] == env_id
+        assert fetched["name"] == f"Test Env {ts}"
+
+        # Update name
+        updated = mgmt.environments.update(
+            WORKSPACE_ID,
+            env_id,
+            name=f"Renamed Env {ts}",
+        )
+        assert updated["name"] == f"Renamed Env {ts}"
+
+        # Delete
+        mgmt.environments.delete(WORKSPACE_ID, env_id)
+
+        # Verify 404
+        with pytest.raises(NahookAPIError) as exc_info:
+            mgmt.environments.get(WORKSPACE_ID, env_id)
+        assert exc_info.value.status == 404
+
+
+# ---------------------------------------------------------------------------
+# Event Type Visibility
+# ---------------------------------------------------------------------------
+
+
+class TestEventTypeVisibility:
+    def test_visibility_lifecycle(self, mgmt: NahookManagement):
+        """Create env + event type, toggle visibility, verify."""
+        ts = _ts()
+
+        # Create prerequisite environment
+        env = mgmt.environments.create(
+            WORKSPACE_ID,
+            name=f"Vis Env {ts}",
+            slug=f"vis-env-{ts}",
+        )
+        env_id = env["id"]
+
+        # Create prerequisite event type
+        event_type = mgmt.event_types.create(
+            WORKSPACE_ID,
+            name=f"vis.test.{ts}",
+            description="For visibility test",
+        )
+        event_type_id = event_type["id"]
+
+        try:
+            # List visibility — all unpublished by default
+            listed = mgmt.environments.list_event_type_visibility(
+                WORKSPACE_ID, env_id
+            )
+            assert isinstance(listed["data"], list)
+            matching = [
+                v for v in listed["data"] if v["eventTypeId"] == event_type_id
+            ]
+            if matching:
+                assert matching[0]["published"] is False
+
+            # Set published = True
+            result = mgmt.environments.set_event_type_visibility(
+                WORKSPACE_ID,
+                env_id,
+                event_type_id,
+                published=True,
+            )
+            assert result["eventTypeId"] == event_type_id
+            assert result["published"] is True
+
+            # Verify via list
+            listed2 = mgmt.environments.list_event_type_visibility(
+                WORKSPACE_ID, env_id
+            )
+            matching2 = [
+                v for v in listed2["data"] if v["eventTypeId"] == event_type_id
+            ]
+            assert len(matching2) == 1
+            assert matching2[0]["published"] is True
+
+            # Set published = False
+            result2 = mgmt.environments.set_event_type_visibility(
+                WORKSPACE_ID,
+                env_id,
+                event_type_id,
+                published=False,
+            )
+            assert result2["published"] is False
+
+            # Verify via list
+            listed3 = mgmt.environments.list_event_type_visibility(
+                WORKSPACE_ID, env_id
+            )
+            matching3 = [
+                v for v in listed3["data"] if v["eventTypeId"] == event_type_id
+            ]
+            assert len(matching3) == 1
+            assert matching3[0]["published"] is False
+        finally:
+            # Cleanup
+            try:
+                mgmt.environments.delete(WORKSPACE_ID, env_id)
+            except NahookAPIError:
+                pass
+            try:
+                mgmt.event_types.delete(WORKSPACE_ID, event_type_id)
+            except NahookAPIError:
+                pass
+
+
+# ---------------------------------------------------------------------------
+# Auth error
+# ---------------------------------------------------------------------------
+
+
 class TestAuthError:
     def test_invalid_management_token(self):
         """An invalid management token raises NahookAPIError on any call."""

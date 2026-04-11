@@ -7,6 +7,7 @@ from typing import Optional
 from .http_client import HttpClient
 from .resources.applications import ApplicationsResource
 from .resources.endpoints import EndpointsResource
+from .resources.environments import EnvironmentsResource
 from .resources.event_types import EventTypesResource
 from .resources.portal_sessions import PortalSessionsResource
 from .resources.subscriptions import SubscriptionsResource
@@ -36,6 +37,7 @@ class NahookManagement:
             timeout=timeout,
         )
         self.endpoints = EndpointsResource(self._http)
+        self.environments = EnvironmentsResource(self._http)
         self.event_types = EventTypesResource(self._http)
         self.applications = ApplicationsResource(self._http)
         self.subscriptions = SubscriptionsResource(self._http)
