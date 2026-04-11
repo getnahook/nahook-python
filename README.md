@@ -6,7 +6,7 @@ Two classes, one package:
 
 | Class | Purpose | Auth |
 |-------|---------|------|
-| [`NahookClient`](#nahookclient) | Send and trigger webhook events | API key (`nhk_...`) |
+| [`NahookClient`](#nahookclient) | Send and trigger webhook events | API key (`nhk_us_...`) |
 | [`NahookManagement`](#nahookmanagement) | Manage endpoints, event types, apps | Management token (`nhm_...`) |
 
 ## Requirements
@@ -31,7 +31,7 @@ Send webhooks to specific endpoints or fan-out by event type.
 ```python
 from nahook import NahookClient
 
-client = NahookClient("nhk_...", retries=3, timeout=5_000, base_url="...")
+client = NahookClient("nhk_us_...", retries=3, timeout=5_000, base_url="...")
 # retries: default 0 (no retries)
 # timeout: default 30_000ms
 # base_url: default https://api.nahook.com
