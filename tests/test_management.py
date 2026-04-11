@@ -96,7 +96,7 @@ class TestTokenValidation:
             NahookClient("bad_key")
 
     def test_accepts_valid_client_key(self):
-        client = NahookClient("nhk_test123")
+        client = NahookClient("nhk_us_test123")
         assert client is not None
 
 
@@ -377,7 +377,7 @@ class TestNahookClient:
         transport = _patch_client(
             {"deliveryId": "del_abc", "idempotencyKey": "key-1", "status": "accepted"}, 202
         )
-        client = NahookClient("nhk_test123", base_url=BASE_URL)
+        client = NahookClient("nhk_us_test123", base_url=BASE_URL)
         result = client.send("ep_123", {"test": True})
         req = _last_request(transport)
         assert "/api/ingest/ep_123" in str(req.url)
@@ -389,7 +389,7 @@ class TestNahookClient:
         transport = _patch_client(
             {"eventTypeId": "evt_abc", "deliveryIds": ["del_1"], "status": "accepted"}, 202
         )
-        client = NahookClient("nhk_test123", base_url=BASE_URL)
+        client = NahookClient("nhk_us_test123", base_url=BASE_URL)
         result = client.trigger("order.paid", {"orderId": "123"})
         req = _last_request(transport)
         assert "/api/ingest/event/order.paid" in str(req.url)
@@ -399,7 +399,7 @@ class TestNahookClient:
         transport = _patch_client(
             {"items": [{"index": 0, "deliveryId": "del_abc", "status": "accepted"}]}, 202
         )
-        client = NahookClient("nhk_test123", base_url=BASE_URL)
+        client = NahookClient("nhk_us_test123", base_url=BASE_URL)
         result = client.send_batch([{"endpointId": "ep_123", "payload": {"test": True}}])
         req = _last_request(transport)
         assert "/api/ingest/batch" in str(req.url)
@@ -410,7 +410,7 @@ class TestNahookClient:
         transport = _patch_client(
             {"items": [{"index": 0, "eventTypeId": "evt_abc", "deliveryIds": [], "status": "accepted"}]}, 202
         )
-        client = NahookClient("nhk_test123", base_url=BASE_URL)
+        client = NahookClient("nhk_us_test123", base_url=BASE_URL)
         result = client.trigger_batch([{"eventType": "order.paid", "payload": {"orderId": "123"}}])
         req = _last_request(transport)
         assert "/api/ingest/event/batch" in str(req.url)
@@ -418,6 +418,6 @@ class TestNahookClient:
 
     def test_throws_nahook_api_error_on_error_response(self, _patch_client):
         _patch_client({"error": {"code": "not_found", "message": "Endpoint not found"}}, 404)
-        client = NahookClient("nhk_test123", base_url=BASE_URL)
+        client = NahookClient("nhk_us_test123", base_url=BASE_URL)
         with pytest.raises(NahookAPIError, match="Endpoint not found"):
             client.send("ep_missing", {})

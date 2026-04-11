@@ -13,7 +13,7 @@ import pytest
 
 from nahook import NahookClient
 
-API_KEY = "nhk_test123"
+API_KEY = "nhk_us_test123"
 BASE_URL = "https://api.test.com"
 
 
