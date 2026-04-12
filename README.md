@@ -181,6 +181,36 @@ mgmt.subscriptions.create("ws_abc", "ep_123", event_type_ids=["evt_456"])
 mgmt.subscriptions.delete("ws_abc", "ep_123", "evt_456")
 ```
 
+### Environments
+
+```python
+result = mgmt.environments.list("ws_abc")
+
+env = mgmt.environments.create("ws_abc",
+    name="Staging",
+    slug="staging",
+)
+
+env = mgmt.environments.get("ws_abc", "env_123")
+
+mgmt.environments.update("ws_abc", "env_123", name="Pre-production")
+
+mgmt.environments.delete("ws_abc", "env_123")
+```
+
+### Event Type Visibility
+
+Control which event types are visible per environment.
+
+```python
+result = mgmt.environments.list_event_type_visibility("ws_abc", "env_123")
+
+vis = mgmt.environments.set_event_type_visibility("ws_abc", "env_123", "evt_456",
+    published=True,
+)
+# {"eventTypeId": "evt_456", "eventTypeName": "order.paid", "published": True}
+```
+
 ### Portal Sessions
 
 ```python
