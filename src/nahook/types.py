@@ -88,10 +88,10 @@ class PortalSession(TypedDict):
     expiresAt: str
 
 
-class Environment(TypedDict, total=False):
-    id: str  # required
-    name: str  # required
-    slug: str  # required
+class Environment(TypedDict):
+    id: str
+    name: str
+    slug: str
     isDefault: bool
     createdAt: str
     updatedAt: str
