@@ -31,11 +31,26 @@ Send webhooks to specific endpoints or fan-out by event type.
 ```python
 from nahook import NahookClient
 
-client = NahookClient("nhk_us_...", retries=3, timeout=5_000, base_url="...")
+# Simple
+client = NahookClient("nhk_us_...")
+
+# With options
+client = NahookClient("nhk_us_...", retries=3, timeout=5_000)
 # retries: default 0 (no retries)
 # timeout: default 30_000ms
-# base_url: default https://api.nahook.com
 ```
+
+### Configuration
+
+The SDK automatically routes requests to the correct regional API based on your API key prefix (`nhk_us_...` -> US, `nhk_eu_...` -> EU, `nhk_ap_...` -> Asia Pacific). No configuration needed.
+
+To override the base URL (for testing or local development):
+
+```python
+client = NahookClient("nhk_us_...", base_url="http://localhost:3001")
+```
+
+For unit tests, mock the SDK client at the dependency injection boundary. For integration tests, override the base URL to point at a local server.
 
 ### Send to a specific endpoint
 
@@ -101,7 +116,11 @@ Programmatically manage your Nahook workspace resources.
 ```python
 from nahook import NahookManagement
 
-mgmt = NahookManagement("nhm_...", timeout=10_000, base_url="...")
+# Simple
+mgmt = NahookManagement("nhm_...")
+
+# With options
+mgmt = NahookManagement("nhm_...", timeout=10_000)
 # Note: retries are not supported for management calls
 ```
 
