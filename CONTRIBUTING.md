@@ -11,7 +11,7 @@ This repository is a **subtree-split mirror** of the Python SDK from our private
 - **Bug reports** — open a GitHub issue with: reproduction steps, SDK version, Python version (`python3 --version`), OS.
 - **Feature requests** — open an issue describing the use case and the API surface you'd want.
 - **Small code suggestions** — paste a snippet in an issue and describe intent; we'll port it into the monorepo and credit you in the resulting commit.
-- **Substantial patches** — email `support@nahook.com` first; we'll either discuss read access to the monorepo or hand-port your change with credit.
+- **Substantial patches** — email `support@nahook.com` first; we'll hand-port your change into the monorepo and credit you in the resulting commit.
 
 ## Local development
 
@@ -20,7 +20,7 @@ git clone https://github.com/getnahook/nahook-python
 cd nahook-python
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-pytest -q                       # 130 tests
+pytest -q                       # full unit test suite
 python -m build --wheel --sdist  # produces wheel + sdist for PyPI publish
 ```
 
