@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Official Python SDK for the Nahook webhook platform"
 readme = "README.md"
 license = "MIT"
+authors = [{ name = "Nahook", email = "support@nahook.com" }]
 requires-python = ">=3.9"
 dependencies = ["httpx>=0.24.0"]
 
