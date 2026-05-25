@@ -59,6 +59,7 @@ class EventType(TypedDict):
     id: str
     name: str
     description: Optional[str]
+    subscriberCount: int
     createdAt: str
 
 

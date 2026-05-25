@@ -21,10 +21,16 @@ class PortalSessionsResource:
         app_id: str,
         *,
         metadata: Optional[Dict[str, str]] = None,
+        role: Optional[str] = None,
+        expires_in_minutes: Optional[int] = None,
     ) -> PortalSession:
         body: Dict[str, Any] = {}
         if metadata is not None:
             body["metadata"] = metadata
+        if role is not None:
+            body["role"] = role
+        if expires_in_minutes is not None:
+            body["expiresInMinutes"] = expires_in_minutes
         return self._http.request(
             "POST",
             f"/management/v1/workspaces/{quote(workspace_id, safe='')}/applications/{quote(app_id, safe='')}/portal",
