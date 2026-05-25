@@ -33,7 +33,14 @@ class EndpointsResource:
         config: Optional[Dict[str, Any]] = None,
         auth_username: Optional[str] = None,
         auth_password: Optional[str] = None,
+        environment_id: Optional[str] = None,
     ) -> Endpoint:
+        """Create an endpoint.
+
+        :param environment_id: Optional. Public id (e.g. ``env_abc123``) of the
+            environment to scope this endpoint. If omitted, the workspace's
+            default environment is used.
+        """
         body: Dict[str, Any] = {"url": url}
         if type_ is not None:
             body["type"] = type_
@@ -47,6 +54,8 @@ class EndpointsResource:
             body["authUsername"] = auth_username
         if auth_password is not None:
             body["authPassword"] = auth_password
+        if environment_id is not None:
+            body["environmentId"] = environment_id
         return self._http.request(
             "POST",
             f"/management/v1/workspaces/{quote(workspace_id, safe='')}/endpoints",
