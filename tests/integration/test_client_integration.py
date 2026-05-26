@@ -114,8 +114,10 @@ def test_trigger_fan_out(client: NahookClient):
 
 
 def test_trigger_unsubscribed(client: NahookClient):
-    """trigger() an unknown event type returns empty deliveryIds."""
-    result = client.trigger("completely.unknown.event.type", payload=_make_payload())
+    """trigger() an event type with no subscribers returns empty deliveryIds."""
+    # Pre-seeded fixture event type with zero subscriptions — shared across all SDK
+    # integration tests. See packages/db/src/seeds/test-fixtures.sql section 8b.
+    result = client.trigger("event.type.nobody.subscribed.to", payload=_make_payload())
 
     assert result["deliveryIds"] == [] or len(result["deliveryIds"]) == 0
 
