@@ -230,6 +230,56 @@ vis = mgmt.environments.set_event_type_visibility("ws_abc", "env_123", "evt_456"
 # {"eventTypeId": "evt_456", "eventTypeName": "order.paid", "published": True}
 ```
 
+### Deliveries
+
+Read access to a workspace's webhook deliveries — list, fetch, and inspect
+attempts. There is no create/update/delete on this resource.
+
+```python
+# Page through an endpoint's deliveries (newest-first).
+result = mgmt.deliveries.list("ws_abc", "ep_123", limit=50)
+for delivery in result["data"]:
+    print(delivery["id"], delivery["status"])
+
+# next_cursor is opaque — pass it through verbatim to fetch the next page.
+# It is None when there are no more pages.
+if result["next_cursor"] is not None:
+    next_page = mgmt.deliveries.list(
+        "ws_abc", "ep_123", limit=50, cursor=result["next_cursor"]
+    )
+
+# Filter by status.
+failed = mgmt.deliveries.list("ws_abc", "ep_123", status="failed")
+
+# Fetch a single delivery's metadata.
+delivery = mgmt.deliveries.get("ws_abc", "del_abc")
+print(delivery["status"], delivery["totalAttempts"])
+
+# Fetch with the stored payload envelope. The envelope's ``status`` carries
+# the access-level reality — only ``"available"`` payloads include ``data``.
+delivery = mgmt.deliveries.get("ws_abc", "del_abc", include_payload=True)
+envelope = delivery["payload"]
+if envelope["status"] == "available":
+    print(envelope["data"], envelope["contentType"])
+elif envelope["status"] == "forbidden":
+    print("Workspace plan does not include payload storage")
+elif envelope["status"] == "processing":
+    print("Delivery still in flight — try again shortly")
+elif envelope["status"] == "not_found":
+    print("No stored payload for this delivery")
+elif envelope["status"] == "error":
+    print("Transient storage failure")
+
+# List a delivery's attempts (chronological, oldest first).
+attempts = mgmt.deliveries.get_attempts("ws_abc", "del_abc")
+for attempt in attempts:
+    print(
+        attempt["attemptNumber"],
+        attempt["status"],
+        attempt["responseStatusCode"],
+    )
+```
+
 ### Portal Sessions
 
 ```python

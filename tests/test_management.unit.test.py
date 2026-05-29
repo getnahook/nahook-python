@@ -14,6 +14,7 @@ import httpx
 import json
 
 from nahook.resources.applications import ApplicationsResource
+from nahook.resources.deliveries import DeliveriesResource
 from nahook.resources.endpoints import EndpointsResource
 from nahook.resources.environments import EnvironmentsResource
 from nahook.resources.event_types import EventTypesResource
@@ -75,6 +76,9 @@ class TestResources:
 
         assert hasattr(mgmt, "environments")
         assert isinstance(mgmt.environments, EnvironmentsResource)
+
+        assert hasattr(mgmt, "deliveries")
+        assert isinstance(mgmt.deliveries, DeliveriesResource)
 
 
 # ── Context manager ──
@@ -171,3 +175,184 @@ class TestEnvironmentsResource:
         call_args = mock_httpx_client.request.call_args
         assert call_args.kwargs["method"] == "PUT"
         assert "/environments/env_1/event-types/evt_1/visibility" in call_args.kwargs["url"]
+
+
+# ── Deliveries resource methods ──
+
+
+class TestDeliveriesResource:
+    """Unit tests for the deliveries resource — wire shape and URL/query assertions."""
+
+    _DEL_A = {
+        "id": "del_a",
+        "idempotencyKey": "k1",
+        "endpointId": "ep_1",
+        "status": "delivered",
+        "totalAttempts": 1,
+        "firstAttemptAt": "2026-05-28T14:30:59Z",
+        "deliveredAt": "2026-05-28T14:30:59Z",
+        "nextRetryAt": None,
+        "hasPayload": True,
+        "createdAt": "2026-05-28T14:30:59Z",
+        "updatedAt": "2026-05-28T14:30:59Z",
+    }
+
+    _DEL_B = {
+        "id": "del_b",
+        "idempotencyKey": "k2",
+        "endpointId": "ep_1",
+        "status": "failed",
+        "totalAttempts": 3,
+        "firstAttemptAt": "2026-05-28T14:31:00Z",
+        "deliveredAt": None,
+        "nextRetryAt": None,
+        "hasPayload": False,
+        "createdAt": "2026-05-28T14:31:00Z",
+        "updatedAt": "2026-05-28T14:31:00Z",
+    }
+
+    def test_list_returns_paginated_data_and_next_cursor(self, mock_httpx_client):
+        body = {"deliveries": [self._DEL_A, self._DEL_B], "nextCursor": "opaque-token-aaa"}
+        mock_httpx_client.request.return_value = httpx.Response(
+            200, content=json.dumps(body).encode()
+        )
+        mgmt = NahookManagement(TOKEN, base_url=BASE_URL)
+        result = mgmt.deliveries.list("ws_abc", "ep_1")
+
+        call_args = mock_httpx_client.request.call_args
+        assert call_args.kwargs["method"] == "GET"
+        assert (
+            call_args.kwargs["url"]
+            == "https://api.test.com/management/v1/workspaces/ws_abc/endpoints/ep_1/deliveries"
+        )
+        assert len(result["data"]) == 2
+        assert result["data"][0]["id"] == "del_a"
+        assert result["next_cursor"] == "opaque-token-aaa"
+
+    def test_list_returns_null_cursor_when_last_page(self, mock_httpx_client):
+        mock_httpx_client.request.return_value = httpx.Response(
+            200, content=json.dumps({"deliveries": [], "nextCursor": None}).encode()
+        )
+        mgmt = NahookManagement(TOKEN, base_url=BASE_URL)
+        result = mgmt.deliveries.list("ws_abc", "ep_1")
+
+        assert result["data"] == []
+        assert result["next_cursor"] is None
+
+    def test_list_forwards_query_params(self, mock_httpx_client):
+        mock_httpx_client.request.return_value = httpx.Response(
+            200, content=json.dumps({"deliveries": [], "nextCursor": None}).encode()
+        )
+        mgmt = NahookManagement(TOKEN, base_url=BASE_URL)
+        mgmt.deliveries.list(
+            "ws_abc", "ep_1", limit=25, cursor="opaque-token-xyz", status="failed"
+        )
+
+        url = mock_httpx_client.request.call_args.kwargs["url"]
+        assert "limit=25" in url
+        assert "cursor=opaque-token-xyz" in url
+        assert "status=failed" in url
+
+    def test_list_omits_unset_query_params(self, mock_httpx_client):
+        mock_httpx_client.request.return_value = httpx.Response(
+            200, content=json.dumps({"deliveries": [], "nextCursor": None}).encode()
+        )
+        mgmt = NahookManagement(TOKEN, base_url=BASE_URL)
+        mgmt.deliveries.list("ws_abc", "ep_1")
+
+        url = mock_httpx_client.request.call_args.kwargs["url"]
+        # No query string at all when no options are passed.
+        assert "?" not in url
+        assert "limit=" not in url
+        assert "cursor=" not in url
+        assert "status=" not in url
+
+    def test_get_returns_metadata_without_envelope_by_default(self, mock_httpx_client):
+        mock_httpx_client.request.return_value = httpx.Response(
+            200, content=json.dumps(self._DEL_A).encode()
+        )
+        mgmt = NahookManagement(TOKEN, base_url=BASE_URL)
+        delivery = mgmt.deliveries.get("ws_abc", "del_a")
+
+        call_args = mock_httpx_client.request.call_args
+        assert call_args.kwargs["method"] == "GET"
+        assert (
+            call_args.kwargs["url"]
+            == "https://api.test.com/management/v1/workspaces/ws_abc/deliveries/del_a"
+        )
+        # No include=payload query when the flag is unset.
+        assert "include=" not in call_args.kwargs["url"]
+        assert delivery["id"] == "del_a"
+        assert delivery["hasPayload"] is True
+        assert "payload" not in delivery
+
+    def test_get_with_include_payload_returns_envelope(self, mock_httpx_client):
+        body = {
+            **self._DEL_A,
+            "payload": {
+                "status": "available",
+                "data": {"orderId": "ord_123"},
+                "contentType": "application/json",
+            },
+        }
+        mock_httpx_client.request.return_value = httpx.Response(
+            200, content=json.dumps(body).encode()
+        )
+        mgmt = NahookManagement(TOKEN, base_url=BASE_URL)
+        delivery = mgmt.deliveries.get("ws_abc", "del_a", include_payload=True)
+
+        url = mock_httpx_client.request.call_args.kwargs["url"]
+        assert "include=payload" in url
+        assert delivery["payload"] == {
+            "status": "available",
+            "data": {"orderId": "ord_123"},
+            "contentType": "application/json",
+        }
+
+    def test_get_returns_forbidden_envelope_for_plan_gated_workspace(self, mock_httpx_client):
+        body = {**self._DEL_A, "payload": {"status": "forbidden"}}
+        mock_httpx_client.request.return_value = httpx.Response(
+            200, content=json.dumps(body).encode()
+        )
+        mgmt = NahookManagement(TOKEN, base_url=BASE_URL)
+        delivery = mgmt.deliveries.get("ws_abc", "del_a", include_payload=True)
+
+        # forbidden is surfaced unchanged — the HTTP layer does NOT raise.
+        assert delivery["payload"] == {"status": "forbidden"}
+
+    def test_get_attempts_returns_array(self, mock_httpx_client):
+        attempts_body = [
+            {
+                "id": "att_1",
+                "attemptNumber": 1,
+                "status": "failed",
+                "responseStatusCode": 502,
+                "responseTimeMs": 142,
+                "errorMessage": "Bad gateway",
+                "createdAt": "2026-05-28T14:31:00Z",
+            },
+            {
+                "id": "att_2",
+                "attemptNumber": 2,
+                "status": "success",
+                "responseStatusCode": 200,
+                "responseTimeMs": 88,
+                "errorMessage": None,
+                "createdAt": "2026-05-28T14:31:30Z",
+            },
+        ]
+        mock_httpx_client.request.return_value = httpx.Response(
+            200, content=json.dumps(attempts_body).encode()
+        )
+        mgmt = NahookManagement(TOKEN, base_url=BASE_URL)
+        attempts = mgmt.deliveries.get_attempts("ws_abc", "del_a")
+
+        call_args = mock_httpx_client.request.call_args
+        assert call_args.kwargs["method"] == "GET"
+        assert (
+            call_args.kwargs["url"]
+            == "https://api.test.com/management/v1/workspaces/ws_abc/deliveries/del_a/attempts"
+        )
+        assert len(attempts) == 2
+        assert attempts[0]["attemptNumber"] == 1
+        assert attempts[1]["status"] == "success"

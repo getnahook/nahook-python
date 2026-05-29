@@ -413,3 +413,80 @@ class TestAuthError:
         err = exc_info.value
         assert err.status in (401, 403)
         assert err.is_auth_error is True
+
+
+# ---------------------------------------------------------------------------
+# Deliveries — reads against pre-seeded fixture rows
+# ---------------------------------------------------------------------------
+#
+# Fixture data lives in packages/db/src/seeds/test-fixtures.sql:
+#   del_fixture_001 — delivered, hasPayload=True
+#   del_fixture_002 — failed, 3 attempts, hasPayload=False
+#   del_fixture_003 — delivering, hasPayload=False
+# All three are scoped to ep_integration_test_001.
+
+
+class TestDeliveries:
+    def test_list_returns_paginated_data_and_next_cursor(self, mgmt: NahookManagement):
+        result = mgmt.deliveries.list(
+            WORKSPACE_ID, "ep_integration_test_001", limit=2
+        )
+        assert len(result["data"]) == 2
+        ids = [d["id"] for d in result["data"]]
+        # Newest-first ordering — del_fixture_003 was the latest seeded row.
+        assert "del_fixture_003" in ids
+        # 3 fixture rows + limit=2 → we expect a non-null cursor.
+        assert isinstance(result["next_cursor"], str)
+        # Cursor must be opaque — it must not look like a publicId.
+        assert not result["next_cursor"].startswith("del_")
+
+    def test_list_status_failed_returns_exactly_one(self, mgmt: NahookManagement):
+        result = mgmt.deliveries.list(
+            WORKSPACE_ID, "ep_integration_test_001", status="failed"
+        )
+        assert len(result["data"]) == 1
+        failed = result["data"][0]
+        assert failed["id"] == "del_fixture_002"
+        assert failed["status"] == "failed"
+        assert failed["totalAttempts"] == 3
+        assert failed["hasPayload"] is False
+
+    def test_get_returns_metadata_without_envelope_by_default(
+        self, mgmt: NahookManagement
+    ):
+        delivery = mgmt.deliveries.get(WORKSPACE_ID, "del_fixture_001")
+        assert delivery["id"] == "del_fixture_001"
+        assert delivery["endpointId"] == "ep_integration_test_001"
+        assert delivery["status"] == "delivered"
+        assert delivery["hasPayload"] is True
+        assert "payload" not in delivery
+
+    def test_get_with_include_payload_returns_envelope(self, mgmt: NahookManagement):
+        delivery = mgmt.deliveries.get(
+            WORKSPACE_ID, "del_fixture_001", include_payload=True
+        )
+        assert "payload" in delivery
+        # R2 wiring in the test infra may not be configured; the envelope
+        # legitimately reports "error" or "not_found" in that case. All 5
+        # status values are valid wire-level responses.
+        assert delivery["payload"]["status"] in {
+            "available",
+            "forbidden",
+            "processing",
+            "not_found",
+            "error",
+        }
+
+    def test_get_attempts_returns_array(self, mgmt: NahookManagement):
+        attempts = mgmt.deliveries.get_attempts(WORKSPACE_ID, "del_fixture_002")
+        assert len(attempts) == 3
+        # Chronological order: 1, 2, 3.
+        assert attempts[0]["attemptNumber"] == 1
+        assert attempts[1]["attemptNumber"] == 2
+        assert attempts[2]["attemptNumber"] == 3
+        assert attempts[0]["responseStatusCode"] == 502
+
+    def test_get_raises_not_found_for_missing_delivery(self, mgmt: NahookManagement):
+        with pytest.raises(NahookAPIError) as exc_info:
+            mgmt.deliveries.get(WORKSPACE_ID, "del_does_not_exist_anywhere")
+        assert exc_info.value.status == 404

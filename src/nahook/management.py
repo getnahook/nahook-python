@@ -6,6 +6,7 @@ from typing import Optional
 
 from .http_client import HttpClient
 from .resources.applications import ApplicationsResource
+from .resources.deliveries import DeliveriesResource
 from .resources.endpoints import EndpointsResource
 from .resources.environments import EnvironmentsResource
 from .resources.event_types import EventTypesResource
@@ -42,6 +43,7 @@ class NahookManagement:
         self.applications = ApplicationsResource(self._http)
         self.subscriptions = SubscriptionsResource(self._http)
         self.portal_sessions = PortalSessionsResource(self._http)
+        self.deliveries = DeliveriesResource(self._http)
 
     def close(self) -> None:
         """Close the underlying HTTP connection pool."""
