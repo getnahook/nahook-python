@@ -52,6 +52,29 @@ client = NahookClient("nhk_us_...", base_url="http://localhost:3001")
 
 For unit tests, mock the SDK client at the dependency injection boundary. For integration tests, override the base URL to point at a local server.
 
+### Graceful shutdown — `with` statement and `close()`
+
+`NahookClient` and `NahookManagement` are context managers — the idiomatic Python pattern is `with`, which closes the underlying `httpx.Client`'s connection pool on exit:
+
+```python
+with NahookClient("nhk_us_...") as client:
+    client.send("ep_abc123", payload={"orderId": "123", "status": "paid"})
+# httpx.Client.close() automatically called here
+```
+
+If `with` doesn't fit your lifecycle (e.g., a long-lived module-scope client), call `close()` explicitly during graceful shutdown:
+
+```python
+import atexit
+
+client = NahookClient("nhk_us_...")
+atexit.register(client.close)
+
+# ... use client across the process lifetime ...
+```
+
+`close()` drains pooled connections and is safe to call multiple times. The same pattern works on `NahookManagement`. Skipping `close()` is fine in short-lived scripts — the OS reaps sockets on process exit — but matters for test harnesses, graceful shutdown handlers, or any process that recycles clients during its lifetime.
+
 ### Send to a specific endpoint
 
 ```python
