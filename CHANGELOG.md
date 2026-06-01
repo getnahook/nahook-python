@@ -5,6 +5,12 @@ All notable changes to this SDK are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and
 this project follows [Semantic Versioning](https://semver.org/).
 
+## [0.1.4] - 2026-06-01
+
+### Documentation
+
+- Removed endpoint metadata field from the README endpoint-creation example. The SDK still accepts `metadata` in `endpoints.create()` payloads for backward compatibility — only the example was scrubbed while metadata is not yet a queryable / filterable field.
+
 ## [0.1.3] - 2026-05-31
 
 ### Features
