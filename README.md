@@ -157,7 +157,6 @@ endpoint = mgmt.endpoints.create("ws_abc",
     url="https://example.com/webhooks",
     description="Production webhook",
     type_="webhook",  # "webhook" | "slack"
-    metadata={"team": "payments"},
 )
 
 endpoint = mgmt.endpoints.get("ws_abc", "ep_123")
