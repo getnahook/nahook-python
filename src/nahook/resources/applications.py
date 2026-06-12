@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 from urllib.parse import quote
 
 from ..http_client import HttpClient
-from ..types import Application, Endpoint, ListResult
+from ..types import UNSET, Application, Endpoint, ListResult, _Unset
 
 
 class ApplicationsResource:
@@ -36,12 +36,25 @@ class ApplicationsResource:
         name: str,
         external_id: Optional[str] = None,
         metadata: Optional[Dict[str, str]] = None,
+        max_endpoints: Optional[int] = None,
+        show_event_types: Optional[bool] = None,
     ) -> Application:
+        """Create an application.
+
+        ``max_endpoints`` caps how many endpoints the application may have
+        (disabled endpoints count); ``0`` makes it read-only, ``None``
+        (default) means unlimited. ``show_event_types`` controls whether the
+        Developer Portal exposes the event-type catalog (defaults to true).
+        """
         body: Dict[str, Any] = {"name": name}
         if external_id is not None:
             body["externalId"] = external_id
         if metadata is not None:
             body["metadata"] = metadata
+        if max_endpoints is not None:
+            body["maxEndpoints"] = max_endpoints
+        if show_event_types is not None:
+            body["showEventTypes"] = show_event_types
         return self._http.request(
             "POST",
             f"/management/v1/workspaces/{quote(workspace_id, safe='')}/applications",
@@ -61,12 +74,24 @@ class ApplicationsResource:
         *,
         name: Optional[str] = None,
         metadata: Optional[Dict[str, str]] = None,
+        max_endpoints: Union[int, None, _Unset] = UNSET,
+        show_event_types: Union[bool, _Unset] = UNSET,
     ) -> Application:
+        """Update an application.
+
+        ``max_endpoints`` is tri-state: leave as ``UNSET`` (default) to keep
+        the current cap, pass ``None`` to clear it (unlimited), or pass an
+        int (>= 0) to set it. ``show_event_types`` is omitted when ``UNSET``.
+        """
         body: Dict[str, Any] = {}
         if name is not None:
             body["name"] = name
         if metadata is not None:
             body["metadata"] = metadata
+        if not isinstance(max_endpoints, _Unset):
+            body["maxEndpoints"] = max_endpoints
+        if not isinstance(show_event_types, _Unset):
+            body["showEventTypes"] = show_event_types
         return self._http.request(
             "PATCH",
             f"/management/v1/workspaces/{quote(workspace_id, safe='')}/applications/{quote(app_id, safe='')}",

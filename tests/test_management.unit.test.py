@@ -177,6 +177,96 @@ class TestEnvironmentsResource:
         assert "/environments/env_1/event-types/evt_1/visibility" in call_args.kwargs["url"]
 
 
+# ── Applications resource — maxEndpoints + showEventTypes (tri-state) ──
+
+
+class TestApplicationsCapFields:
+    APP = {
+        "id": "app_1",
+        "externalId": None,
+        "name": "Acme",
+        "metadata": {},
+        "maxEndpoints": None,
+        "showEventTypes": True,
+        "createdAt": "2026-01-01T00:00:00Z",
+        "updatedAt": "2026-01-01T00:00:00Z",
+    }
+
+    def test_create_with_max_endpoints_includes_it(self, mock_httpx_client):
+        mock_httpx_client.request.return_value = httpx.Response(
+            201, content=json.dumps({**self.APP, "maxEndpoints": 2}).encode()
+        )
+        mgmt = NahookManagement(TOKEN, base_url=BASE_URL)
+        result = mgmt.applications.create("ws_abc", name="Acme", max_endpoints=2)
+        body = mock_httpx_client.request.call_args.kwargs["json"]
+        assert body["maxEndpoints"] == 2
+        assert result["maxEndpoints"] == 2
+
+    def test_create_with_show_event_types_false_includes_it(self, mock_httpx_client):
+        mock_httpx_client.request.return_value = httpx.Response(
+            201, content=json.dumps({**self.APP, "showEventTypes": False}).encode()
+        )
+        mgmt = NahookManagement(TOKEN, base_url=BASE_URL)
+        result = mgmt.applications.create("ws_abc", name="Acme", show_event_types=False)
+        body = mock_httpx_client.request.call_args.kwargs["json"]
+        assert body["showEventTypes"] is False
+        assert result["showEventTypes"] is False
+
+    def test_create_without_fields_omits_both(self, mock_httpx_client):
+        mock_httpx_client.request.return_value = httpx.Response(
+            201, content=json.dumps(self.APP).encode()
+        )
+        mgmt = NahookManagement(TOKEN, base_url=BASE_URL)
+        mgmt.applications.create("ws_abc", name="Acme")
+        body = mock_httpx_client.request.call_args.kwargs["json"]
+        assert "maxEndpoints" not in body
+        assert "showEventTypes" not in body
+
+    def test_update_with_none_sends_explicit_null(self, mock_httpx_client):
+        mock_httpx_client.request.return_value = httpx.Response(
+            200, content=json.dumps(self.APP).encode()
+        )
+        mgmt = NahookManagement(TOKEN, base_url=BASE_URL)
+        mgmt.applications.update("ws_abc", "app_1", max_endpoints=None)
+        body = mock_httpx_client.request.call_args.kwargs["json"]
+        assert "maxEndpoints" in body
+        assert body["maxEndpoints"] is None
+
+    def test_update_omitting_fields_leaves_them_out(self, mock_httpx_client):
+        mock_httpx_client.request.return_value = httpx.Response(
+            200, content=json.dumps({**self.APP, "name": "Renamed"}).encode()
+        )
+        mgmt = NahookManagement(TOKEN, base_url=BASE_URL)
+        mgmt.applications.update("ws_abc", "app_1", name="Renamed")
+        body = mock_httpx_client.request.call_args.kwargs["json"]
+        assert "maxEndpoints" not in body
+        assert "showEventTypes" not in body
+
+    def test_response_exposes_both_fields(self, mock_httpx_client):
+        mock_httpx_client.request.return_value = httpx.Response(
+            200,
+            content=json.dumps(
+                {**self.APP, "maxEndpoints": 5, "showEventTypes": False}
+            ).encode(),
+        )
+        mgmt = NahookManagement(TOKEN, base_url=BASE_URL)
+        result = mgmt.applications.get("ws_abc", "app_1")
+        assert result["maxEndpoints"] == 5
+        assert result["showEventTypes"] is False
+
+    def test_update_with_value_sends_it(self, mock_httpx_client):
+        mock_httpx_client.request.return_value = httpx.Response(
+            200, content=json.dumps({**self.APP, "maxEndpoints": 5}).encode()
+        )
+        mgmt = NahookManagement(TOKEN, base_url=BASE_URL)
+        mgmt.applications.update(
+            "ws_abc", "app_1", max_endpoints=5, show_event_types=True
+        )
+        body = mock_httpx_client.request.call_args.kwargs["json"]
+        assert body["maxEndpoints"] == 5
+        assert body["showEventTypes"] is True
+
+
 # ── Deliveries resource methods ──
 
 

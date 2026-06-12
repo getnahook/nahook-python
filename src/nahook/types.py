@@ -63,11 +63,38 @@ class EventType(TypedDict):
     createdAt: str
 
 
+class _Unset:
+    """Sentinel distinguishing "argument not passed" from an explicit ``None``.
+
+    Used for tri-state PATCH fields like ``max_endpoints``: leaving the
+    argument as ``UNSET`` omits it from the request body (unchanged), while
+    passing ``None`` sends an explicit JSON null (clear).
+    """
+
+    _instance: Optional["_Unset"] = None
+
+    def __new__(cls) -> "_Unset":
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __repr__(self) -> str:
+        return "UNSET"
+
+    def __bool__(self) -> bool:
+        return False
+
+
+UNSET = _Unset()
+
+
 class Application(TypedDict):
     id: str
     externalId: Optional[str]
     name: str
     metadata: Dict[str, str]
+    maxEndpoints: Optional[int]
+    showEventTypes: bool
     createdAt: str
     updatedAt: str
 

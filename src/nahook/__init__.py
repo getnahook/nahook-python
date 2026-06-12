@@ -4,6 +4,7 @@ from .client import NahookClient
 from .errors import NahookAPIError, NahookError, NahookNetworkError, NahookTimeoutError
 from .management import NahookManagement
 from .types import (
+    UNSET,
     Application,
     BatchResult,
     BatchResultItem,
@@ -56,6 +57,7 @@ __all__ = [
     "EventType",
     "EventTypeVisibility",
     "Application",
+    "UNSET",
     "GetDeliveryOptions",
     "ListDeliveriesOptions",
     "PaginatedResult",
