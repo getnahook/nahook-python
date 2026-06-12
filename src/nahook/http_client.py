@@ -14,7 +14,7 @@ from .errors import NahookAPIError, NahookNetworkError, NahookTimeoutError
 
 DEFAULT_BASE_URL = "https://api.nahook.com"
 DEFAULT_TIMEOUT_MS = 30_000
-SDK_VERSION = "0.1.3"
+SDK_VERSION = "0.2.0"
 USER_AGENT = f"nahook-python/{SDK_VERSION}"
 
 BASE_DELAY_MS = 500
