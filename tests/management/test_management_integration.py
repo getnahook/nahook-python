@@ -194,6 +194,90 @@ class TestApplications:
 
 
 # ---------------------------------------------------------------------------
+# Applications — maxEndpoints cap + showEventTypes (I1-I5)
+# ---------------------------------------------------------------------------
+
+
+class TestApplicationEndpointCap:
+    def test_max_endpoints_cap_lifecycle(self, mgmt: NahookManagement):
+        """I1-I5: persist both fields, enforce the cap (disabled endpoints
+        count), and clear it with an explicit null (tri-state PATCH)."""
+        ts = _ts()
+
+        # I1: create with maxEndpoints=2 + showEventTypes=False -> persisted
+        created = mgmt.applications.create(
+            WORKSPACE_ID,
+            name=f"Cap App {ts}",
+            max_endpoints=2,
+            show_event_types=False,
+        )
+        app_id = created["id"]
+        assert created["maxEndpoints"] == 2
+        assert created["showEventTypes"] is False
+
+        endpoint_ids = []
+        try:
+            fetched = mgmt.applications.get(WORKSPACE_ID, app_id)
+            assert fetched["maxEndpoints"] == 2
+            assert fetched["showEventTypes"] is False
+
+            # I2: patch both -> updated
+            updated = mgmt.applications.update(
+                WORKSPACE_ID,
+                app_id,
+                max_endpoints=1,
+                show_event_types=True,
+            )
+            assert updated["maxEndpoints"] == 1
+            assert updated["showEventTypes"] is True
+            fetched = mgmt.applications.get(WORKSPACE_ID, app_id)
+            assert fetched["maxEndpoints"] == 1
+            assert fetched["showEventTypes"] is True
+
+            # I3: 1st endpoint fits the cap; 2nd is rejected with 403
+            ep1 = mgmt.applications.create_endpoint(
+                WORKSPACE_ID, app_id, url="https://httpbin.org/post"
+            )
+            endpoint_ids.append(ep1["id"])
+
+            with pytest.raises(NahookAPIError) as exc_info:
+                mgmt.applications.create_endpoint(
+                    WORKSPACE_ID, app_id, url="https://httpbin.org/post"
+                )
+            assert exc_info.value.status == 403
+            assert exc_info.value.code == "application_endpoint_limit_reached"
+
+            # I4: a disabled endpoint still occupies its slot
+            mgmt.endpoints.update(WORKSPACE_ID, ep1["id"], is_active=False)
+            with pytest.raises(NahookAPIError) as exc_info:
+                mgmt.applications.create_endpoint(
+                    WORKSPACE_ID, app_id, url="https://httpbin.org/post"
+                )
+            assert exc_info.value.status == 403
+            assert exc_info.value.code == "application_endpoint_limit_reached"
+
+            # I5: explicit null clears the cap (unlimited) -> create succeeds
+            cleared = mgmt.applications.update(
+                WORKSPACE_ID, app_id, max_endpoints=None
+            )
+            assert cleared["maxEndpoints"] is None
+            ep2 = mgmt.applications.create_endpoint(
+                WORKSPACE_ID, app_id, url="https://httpbin.org/post"
+            )
+            endpoint_ids.append(ep2["id"])
+        finally:
+            for ep_id in endpoint_ids:
+                try:
+                    mgmt.endpoints.delete(WORKSPACE_ID, ep_id)
+                except NahookAPIError:
+                    pass
+            try:
+                mgmt.applications.delete(WORKSPACE_ID, app_id)
+            except NahookAPIError:
+                pass
+
+
+# ---------------------------------------------------------------------------
 # Subscriptions CRUD
 # ---------------------------------------------------------------------------
 
