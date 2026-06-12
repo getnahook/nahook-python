@@ -254,6 +254,21 @@ class TestApplicationsCapFields:
         assert result["maxEndpoints"] == 5
         assert result["showEventTypes"] is False
 
+    def test_response_without_cap_fields_passes_through_raw(self, mock_httpx_client):
+        # The SDK returns the parsed JSON dict as-is: absent fields are
+        # missing keys, unlike the typed SDKs which default showEventTypes
+        # to True. The live API always sends both fields.
+        legacy = {
+            k: v for k, v in self.APP.items() if k not in ("maxEndpoints", "showEventTypes")
+        }
+        mock_httpx_client.request.return_value = httpx.Response(
+            200, content=json.dumps(legacy).encode()
+        )
+        mgmt = NahookManagement(TOKEN, base_url=BASE_URL)
+        result = mgmt.applications.get("ws_abc", "app_1")
+        assert "maxEndpoints" not in result
+        assert "showEventTypes" not in result
+
     def test_update_with_value_sends_it(self, mock_httpx_client):
         mock_httpx_client.request.return_value = httpx.Response(
             200, content=json.dumps({**self.APP, "maxEndpoints": 5}).encode()
